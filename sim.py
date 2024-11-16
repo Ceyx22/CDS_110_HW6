@@ -8,7 +8,7 @@ def simulation(params, sim_params):
     N = sim_params['N']
     DT = sim_params['DT']
     K = sim_params['K']
-    integral = sim_params['integral']
+    # integral = sim_params['integral']
 
 
     # Set the model.
@@ -42,7 +42,7 @@ def simulation(params, sim_params):
         theta_d_previous = theta_d
         state_d = np.array([x_d_I, y_d_I, theta_d, vx_d_I, vy_d_I, omega_d])
 
-        action, outputs, e_integral = ctrl_linear(state=state, state_d=state_d, K=K, sim_params=sim_params, integral=integral, e_integral=e_integral)
+        action, outputs, e_integral = ctrl_linear(state=state, state_d=state_d, K=K, sim_params=sim_params, e_integral=e_integral)
 
         # Propagate.
         next_state = car.dynamics(state, action)

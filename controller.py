@@ -2,10 +2,14 @@ import numpy as np
 from trajectory import wrap_circular_value
 
 
-def ctrl_linear(state:np.ndarray, state_d:np.ndarray, K:np.ndarray, sim_params, integral=False, e_integral=np.zeros(4)) -> np.ndarray:
+def ctrl_linear(state:np.ndarray, state_d:np.ndarray, K:np.ndarray, sim_params, e_integral=np.zeros(4)) -> np.ndarray:
     MAX_VEL = sim_params['MAX_VEL']
     MAX_STEERING = sim_params['MAX_STEERING']
     DT = sim_params['DT']
+    L = sim_params['L']
+    rad_circle = 2.0
+    integral = sim_params['integral']
+    feedforward = sim_params['feedforward']
 
     p_I_x, p_I_y, theta, v_B_x, v_B_y, omega = state
     p_d_I_x, p_d_I_y, theta_d, v_d_I_x, v_d_I_y, omega_d = state_d
@@ -20,6 +24,7 @@ def ctrl_linear(state:np.ndarray, state_d:np.ndarray, K:np.ndarray, sim_params, 
     R = np.array([[np.cos(theta), -np.sin(theta)],
                     [np.sin(theta), np.cos(theta)]])
     perr_B = R.T @ p_err_I
+    # print(f'pos error of body: {perr_B}')
     perr_d_B = R_d.T @ p_err_I
     v_d_B = R_d.T @ v_d_I
 
@@ -37,19 +42,30 @@ def ctrl_linear(state:np.ndarray, state_d:np.ndarray, K:np.ndarray, sim_params, 
     # Do not forget to clip the steering angle between u_steering_min and u_steering_max.
     # Do not forget to clamp the integral gain for adaptation.
     e = np.array([e_perp, e_perp_dot, theta_err, omega_err])
-    
-    
+    delta_ff = 0
+    integ_term = 0
     if integral:
+        # part E
+        K_z = np.array([0.5, 0.5, 0.5, 0.5])
         e_integral = e_integral + e * DT
         # print(e_integral)
-        e_integral = np.clip(e_integral, -MAX_STEERING, MAX_STEERING)
-
-        e = np.concatenate((e, e_integral))
+        e_integral = np.clip(e_integral, -5, 5)
+        integ_term = -K_z @ e_integral
+        # e = e_integral
+        # e = np.concatenate((e, e_integral))
+        # print(e)
         # print(e_integral)
+    elif feedforward:
+        # part F 
+        # delta_ff = L*omega_d/2.0
+        delta_ff = np.atan2(L,rad_circle)
+        # delta_ff = L/2.0
+        
+        # print(f'delta_ff: {delta_ff}')
 
-
-    u_steering = - K @ e
-    # print(u_steering)
+    u_steering = - K @ e + delta_ff + integ_term
+    # print(f'printing u_steering{u_steering}')
+    # print(f'printing error{e}')
     u_steering = np.clip(u_steering[0], -MAX_STEERING, MAX_STEERING)
 
     ###

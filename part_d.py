@@ -23,6 +23,7 @@ def calc_lqr(params):
 
     B = np.array([[0], [C_y/m], [0], [C_y*L/(2*I_z)]])
 
+    # Q = np.diag([1, 15, 1, 15])
     Q = np.diag([15, 1, 15, 1])
     R = np.array([[1]])
 
@@ -49,7 +50,9 @@ if __name__ == "__main__":
         'MAX_STEERING': np.deg2rad(20),
         'K':K,
         'DT': 0.01,
-        'integral': False
+        'L': 0.4,
+        'integral': False,
+        'feedforward':False,
     }
 
     state_array, des_traj_array, output_dict_list, action_list = simulation(params=params, sim_params=sim_params)
